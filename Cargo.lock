@@ -1184,6 +1184,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bug_game"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bug_lib",
+]
+
+[[package]]
+name = "bug_lib"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3053,21 +3068,6 @@ dependencies = [
  "grid",
  "num-traits",
  "slotmap",
-]
-
-[[package]]
-name = "template_game"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "template_lib",
-]
-
-[[package]]
-name = "template_lib"
-version = "0.1.0"
-dependencies = [
- "bevy",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use template_lib::{prelude::*, TemplatePlugins};
+use bug_lib::{prelude::*, BugGamePlugins};
 
 fn main() {
     let mut app = App::new();
@@ -8,12 +8,12 @@ fn main() {
             primary_window: Some(Window {
                 canvas: Some("#bevy".to_string()),
                 fit_canvas_to_parent: true,
-                title: "Template".to_string(),
+                title: "Super Bug Smasher".to_string(),
                 ..Default::default()
             }),
             ..Default::default()
         }),
-        TemplatePlugins,
+        BugGamePlugins,
     ));
 
     app.run();

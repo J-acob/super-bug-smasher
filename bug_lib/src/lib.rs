@@ -1,20 +1,25 @@
 use bevy::{app::PluginGroupBuilder, prelude::*};
-use hello::HelloPlugin;
+use camera::CameraPlugin;
+use swatter::SwatterPlugin;
 
-mod hello;
+mod camera;
+mod swatter;
 
 pub mod prelude {
     pub use bevy::prelude::*;
 }
-pub struct TemplatePlugins;
+pub struct BugGamePlugins;
 
-impl PluginGroup for TemplatePlugins {
+impl PluginGroup for BugGamePlugins {
     fn build(self) -> PluginGroupBuilder {
         let mut group = PluginGroupBuilder::start::<Self>();
 
         // Add any of the library plugins here, conditionally if need be.
 
-        group = group.add(HelloPlugin);
+        group = group
+            .add(CameraPlugin)
+            .add(SwatterPlugin)
+            ;
         group
     }
 }
