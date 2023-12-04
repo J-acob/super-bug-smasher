@@ -14,7 +14,6 @@ pub struct Swatter;
 
 /// Sets up swatter for use
 fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
-
     // Make the cursor invisible
     let mut window: Mut<Window> = windows.single_mut();
     window.cursor.visible = false;
@@ -30,6 +29,7 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
             transform: Transform::from_translation(Vec3::new(-50., 0., 0.)),
             ..Default::default()
         },
+        ZIndex::Global(1),
     ));
 }
 
@@ -39,7 +39,6 @@ fn swatter_follows_mouse(
     windows: Query<&Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
 ) {
-
     // There should only ever be ONE swatter (unless multiplayer..?)
     let Ok((_, mut swatter_transform)) = swatter_query.get_single_mut() else {
         return;
@@ -54,6 +53,7 @@ fn swatter_follows_mouse(
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
-        swatter_transform.translation = Vec3::new(mouse_world_position.x, mouse_world_position.y, 0.);
+        swatter_transform.translation =
+            Vec3::new(mouse_world_position.x, mouse_world_position.y, 1.);
     }
 }
