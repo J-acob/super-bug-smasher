@@ -8,7 +8,7 @@
 
 use bevy::{prelude::*, app::AppExit};
 
-use crate::state::AppState;
+use crate::{state::AppState, asset_loading::AppAssets};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -177,7 +177,7 @@ fn menu_setup(mut menu_state: ResMut<NextState<MenuState>>) {
     menu_state.set(MenuState::Main);
 }
 
-fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, assets: Res<AppAssets>) {
     // Common style for all buttons on the screen
     let button_style = Style {
         width: Val::Px(250.0),
@@ -195,9 +195,11 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         left: Val::Px(10.0),
         ..default()
     };
+    let font = &assets.font;
     let button_text_style = TextStyle {
         font_size: 40.0,
         color: TEXT_COLOR,
+        font: font.clone_weak(),
         ..default()
     };
 
@@ -211,6 +213,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
+                z_index: ZIndex::Global(-1),
                 ..default()
             },
             OnMainMenuScreen,
@@ -230,10 +233,11 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     // Display the game name
                     parent.spawn(
                         TextBundle::from_section(
-                            "Bevy Game Menu UI",
+                            "Super Bug Smasher",
                             TextStyle {
                                 font_size: 80.0,
                                 color: TEXT_COLOR,
+                                font: font.clone_weak(),
                                 ..default()
                             },
                         )

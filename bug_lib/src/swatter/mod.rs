@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::{PrimaryWindow, CursorGrabMode}, ui::widget::UiImageSize};
 
 pub struct SwatterPlugin;
 
@@ -20,40 +20,54 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
 
     commands.spawn((
         Swatter,
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0.25, 0.25, 0.75),
-                custom_size: Some(Vec2::new(50.0, 100.0)),
+        ImageBundle {
+            /* 
+            text: Text::from_section("Hi", TextStyle {
+                font_size: 40.,
+                ..Default::default()
+            }),
+            */
+            background_color: Color::BLUE.into(),
+            style: Style {
+                position_type: PositionType::Absolute,
+                width: Val::Px(32.),
+                height: Val::Px(32.),
                 ..default()
             },
-            transform: Transform::from_translation(Vec3::new(-50., 0., 0.)),
-            ..Default::default()
-        },
-        ZIndex::Global(1),
-    ));
+            z_index: ZIndex::Global(1),
+            ..default()
+        }
+    ))
+    ;
 }
 
 /// Moves the swatter to the location of the mouse
 fn swatter_follows_mouse(
-    mut swatter_query: Query<(&Swatter, &mut Transform)>,
-    windows: Query<&Window, With<PrimaryWindow>>,
+    mut swatter_query: Query<(&Swatter, &mut Style)>,
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
 ) {
     // There should only ever be ONE swatter (unless multiplayer..?)
-    let Ok((_, mut swatter_transform)) = swatter_query.get_single_mut() else {
+    let Ok((_, mut swatter_style)) = swatter_query.get_single_mut() else {
         return;
     };
     let Ok((camera, camera_transform)) = camera_query.get_single() else {
         return;
     };
 
-    let window = windows.single();
+    let mut window = windows.single_mut();
 
-    if let Some(mouse_world_position) = window
+    if let Some(mouse_position) = window
         .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
+        //.and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
-        swatter_transform.translation =
-            Vec3::new(mouse_world_position.x, mouse_world_position.y, 1.);
+        window.cursor.visible = false;
+        swatter_style.top = Val::Px(mouse_position.y);
+        swatter_style.left = Val::Px(mouse_position.x);
+         
+    } else {
+        // If we can't get cursor position, make it visible again
+        window.cursor.visible = true;
+        // Also reset the position of stuff so the user can't do any _weird_ stuff
     }
 }
