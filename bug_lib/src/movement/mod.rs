@@ -16,6 +16,9 @@ pub struct MovementBundle {
 #[derive(Component, Default)]
 pub struct Velocity(pub Vec2);
 
+#[derive(Component, Default)]
+pub struct Speed(f32);
+
 /// Apply velocity to things that want to move.
 /// Adapted from https://bevyengine.org/examples/Games/breakout/
 fn velocity_moves_transforms(mut query: Query<(&Velocity, &mut Transform)>, time: Res<Time>) {

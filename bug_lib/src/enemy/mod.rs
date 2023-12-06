@@ -12,7 +12,7 @@ impl Plugin for EnemyPlugin {
         app
         .insert_resource(EnemySpawnConfig {
             timer: Timer::from_seconds(0.05, TimerMode::Repeating),
-            spawn_radius: 500.,
+            spawn_radius: Vec2::new(1920., 1080.),
         })
         .add_systems(Update, (debug_enemies, enemies_spawn, enemies_hate_the_tower).run_if(in_state(AppState::InGame)));
     }
@@ -32,7 +32,7 @@ pub struct EnemyBundle {
 #[derive(Resource)]
 pub struct EnemySpawnConfig {
     pub timer: Timer,
-    pub spawn_radius: f32,
+    pub spawn_radius: Vec2,
 }
 
 fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<EnemySpawnConfig>) {
@@ -44,12 +44,8 @@ fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<Ene
         
         let mut rng = rand::thread_rng();
         let random_angle: f32 = rng.gen_range(0.0..=1000.) * PI * 2.;
-        //let random_x: f32 = rng.gen_range(0.0..100.);
-        //let random_y: f32 = rng.gen_range(0.0..100.);
-        //let x = 0. + config.spawn_radius + (random_angle * 3.14 / 180.).cos();
-        //let y = 0. + config.spawn_radius + (random_angle * 3.14 / 180.).sin();
-        let x = random_angle.cos() * config.spawn_radius;
-        let y = random_angle.sin() * config.spawn_radius;
+        let x = random_angle.cos() * config.spawn_radius.x;
+        let y = random_angle.sin() * config.spawn_radius.y;
         
         commands.spawn(
             EnemyBundle {

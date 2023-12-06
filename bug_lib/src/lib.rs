@@ -2,6 +2,7 @@ use asset_loading::AssetPlugin;
 use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use camera::CameraPlugin;
+use collision::CollisionPlugin;
 use enemy::EnemyPlugin;
 use movement::MovementPlugin;
 use state::StatePlugin;
@@ -41,6 +42,7 @@ impl PluginGroup for BugGamePlugins {
             .add(UiPlugin)
             .add(EnemyPlugin)
             .add(MovementPlugin)
+            .add(CollisionPlugin)
             .add(TowerPlugin)
             ;
         group
