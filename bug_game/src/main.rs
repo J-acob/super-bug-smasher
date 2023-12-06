@@ -8,7 +8,7 @@ fn main() {
             primary_window: Some(Window {
                 //canvas: Some("#bevy".to_string()),
                 fit_canvas_to_parent: true,
-                title: "Super Bug Smasher".to_string(),
+                title: "Super Bug Smasher ".to_string(),
                 ..Default::default()
             }),
             ..Default::default()

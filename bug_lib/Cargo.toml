@@ -9,4 +9,5 @@ edition = "2021"
 bevy = { version = "0.12.1"}
 bevy_asset_loader = "0.18.0"
 bevy_embedded_assets = "0.9.1"
+rand = "0.8.5"
 
