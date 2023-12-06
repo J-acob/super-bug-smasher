@@ -6,12 +6,11 @@
 // type aliases tends to obfuscate code while offering no improvement in code cleanliness.
 #![allow(clippy::type_complexity)]
 
-use bevy::{prelude::*, app::AppExit};
+use bevy::{app::AppExit, prelude::*};
 
-use crate::{state::AppState, asset_loading::AppAssets};
+use crate::{asset_loading::AppAssets, state::AppState};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
-
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy)]

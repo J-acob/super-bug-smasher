@@ -1,12 +1,19 @@
-use bevy::{prelude::*, window::{PrimaryWindow, CursorGrabMode}, ui::{widget::UiImageSize, FocusPolicy, ContentSize}};
+use bevy::{
+    prelude::*,
+    ui::{widget::UiImageSize, ContentSize, FocusPolicy},
+    window::{CursorGrabMode, PrimaryWindow},
+};
 
-use crate::collision::{Collider, visualize_colliders};
+use crate::{
+    collision::{visualize_colliders, Collider},
+    enemy::Enemy, movement::velocity_moves_transforms,
+};
 
 pub struct SwatterPlugin;
 
 impl Plugin for SwatterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, swatter_follows_mouse.before(visualize_colliders))
+        app.add_systems(Update, (swatter_follows_mouse.before(visualize_colliders), swatter_despawns_enemies.after(swatter_follows_mouse).after(velocity_moves_transforms)))
             .add_systems(Startup, setup_swatter);
     }
 }
@@ -22,9 +29,7 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
 
     commands.spawn((
         Swatter,
-        Collider {
-            radius: 16.,
-        },
+        Collider { radius: 64. },
         SpatialBundle {
             ..Default::default()
         },
@@ -32,13 +37,13 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
         BackgroundColor(Color::BLUE),
         Style {
             position_type: PositionType::Absolute,
-                width: Val::Px(32.),
-                height: Val::Px(32.),
-                margin: UiRect {
-                    top: Val::Percent(-1.25),
-                    left: Val::Percent(-1.25),
-                    ..Default::default()
-                },
+            width: Val::Px(32.),
+            height: Val::Px(32.),
+            margin: UiRect {
+                top: Val::Auto,
+                left: Val::Auto,
+                ..Default::default()
+            },
             ..Default::default()
         },
         ZIndex::Global(1),
@@ -46,61 +51,10 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
         UiImage::default(),
         ContentSize::default(),
         UiImageSize::default(),
-    ))
-    ;
-    /* 
-    .with_children(|parent| {
-        parent.spawn(ImageBundle {
-            background_color: Color::BLUE.into(),
-            style: Style {
-                position_type: PositionType::Absolute,
-                width: Val::Px(32.),
-                height: Val::Px(32.),
-                ..default()
-            },
-            z_index: ZIndex::Global(1),
-            ..default()
-        });
-        
-    })
-    ;
-    */
+    ));
 }
 
-// Moves the swatter to the location of the mouse
-/* 
-fn swatter_follows_mouse(
-    mut swatter_query: Query<(&Swatter, &mut Style, &mut Transform)>,
-    mut windows: Query<&mut Window, With<PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform)>,
-) {
-    // There should only ever be ONE swatter (unless multiplayer..?)
-    let Ok((_, mut swatter_style, mut swatter_transform)) = swatter_query.get_single_mut() else {
-        return;
-    };
-    let Ok((camera, camera_transform)) = camera_query.get_single() else {
-        return;
-    };
-
-    let mut window = windows.single_mut();
-
-    if let Some(mouse_position) = window
-        .cursor_position()
-        //.and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
-    {
-        window.cursor.visible = false;
-        swatter_style.top = Val::Px(mouse_position.y);
-        swatter_style.left = Val::Px(mouse_position.x);
-         
-    } else {
-        // If we can't get cursor position, make it visible again
-        window.cursor.visible = true;
-        // Also reset the position of stuff so the user can't do any _weird_ stuff
-    }
-}
-*/
-
-fn swatter_follows_mouse(
+pub fn swatter_follows_mouse(
     mut swatter_query: Query<(&Swatter, &mut Transform, &mut Style)>,
     mut windows: Query<&mut Window, With<PrimaryWindow>>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
@@ -114,23 +68,46 @@ fn swatter_follows_mouse(
     };
 
     let mut window = windows.single_mut();
-    
+
+    // Move the transform
     if let Some(mouse_position) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world_2d(camera_transform, cursor))
     {
-        swatter_transform.translation = mouse_position.xy().extend(1.); 
-    } 
-    
-    if let Some(mouse_position) = window
-        .cursor_position()
-    {
+        swatter_transform.translation = mouse_position.xy().extend(1.);
+    }
+
+    // Update cursor graphic position
+    if let Some(mouse_position) = window.cursor_position() {
         window.cursor.visible = false;
-        swatter_style.top = Val::Px(mouse_position.y);
-        swatter_style.left = Val::Px(mouse_position.x);
-         
+        // (This is the radius of the collider)
+        swatter_style.top = Val::Px(mouse_position.y - 16.);
+        swatter_style.left = Val::Px(mouse_position.x - 16.);
     } else {
         // If we can't get cursor position, make it visible again
         window.cursor.visible = true;
+    }
+}
+
+fn swatter_despawns_enemies(
+    mut commands: Commands,
+    enemy_query: Query<(Entity, &Enemy, &Collider, &Transform)>,
+    swatter_query: Query<(&Swatter, &Collider, &Transform)>,
+    buttons: Res<Input<MouseButton>>,
+) {
+    let Ok((_, swatter_collider, swatter_transform)) = swatter_query.get_single() else {
+        return;
+    };
+
+    if buttons.pressed(MouseButton::Left) {
+        for (e, _, enemy_collider, enemy_transform) in enemy_query.iter() {
+            let collision = swatter_collider.collides_with(swatter_transform, enemy_collider, enemy_transform);
+
+            if collision {
+                commands.entity(e).despawn_recursive()
+            } else {
+                //println!("No collision");
+            }
+        }
     }
 }

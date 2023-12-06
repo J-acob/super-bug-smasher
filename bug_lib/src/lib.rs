@@ -12,15 +12,16 @@ use ui::UiPlugin;
 
 mod asset_loading;
 mod camera;
-mod combat;
-mod state;
-mod swatter;
-mod ui;
-mod movement;
-mod enemy;
-mod steering;
-mod tower;
 mod collision;
+mod combat;
+mod enemy;
+mod movement;
+mod state;
+mod steering;
+mod swatter;
+mod tower;
+mod ui;
+mod audio;
 
 pub mod prelude {
     pub use bevy::prelude::*;
@@ -43,8 +44,7 @@ impl PluginGroup for BugGamePlugins {
             .add(EnemyPlugin)
             .add(MovementPlugin)
             .add(CollisionPlugin)
-            .add(TowerPlugin)
-            ;
+            .add(TowerPlugin);
         group
     }
 }
