@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     combat::prelude::Health,
-    movement::{self, MovementBundle, Velocity},
+    movement::{self, MovementBundle, Velocity, velocity_moves_transforms},
     state::AppState,
     tower::Tower, collision::Collider,
 };
@@ -15,12 +15,12 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnConfig {
-            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+            timer: Timer::from_seconds(0.5, TimerMode::Repeating),
             spawn_radius: Vec2::new(1920., 1080.),
         })
         .add_systems(
             Update,
-            (debug_enemies, enemies_spawn, enemies_hate_the_tower)
+            ((enemies_spawn, enemies_hate_the_tower.before(velocity_moves_transforms), debug_enemies.after(velocity_moves_transforms)).chain())
                 .run_if(in_state(AppState::InGame)),
         );
     }
@@ -57,6 +57,9 @@ fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<Ene
 
         commands.spawn(EnemyBundle {
             transform: Transform::from_translation(Vec3::new(x, y, 0.)),
+            collider: Collider {
+                radius: 32.,
+            },
             ..Default::default()
         });
     }

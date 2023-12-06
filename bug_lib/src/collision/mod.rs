@@ -24,17 +24,16 @@ impl Collider {
         other: &Collider,
         other_transform: &Transform,
     ) -> bool {
-        let dist_x = self_transform.translation.x - other_transform.translation.x;
-        let dist_y = self_transform.translation.y - other_transform.translation.y;
 
-        let distance: f32 = ((dist_x * dist_x) + (dist_y * dist_y)).sqrt();
-
-        distance <= self.radius + other.radius
+        let distance = self_transform.translation.xy().distance(other_transform.translation.xy());
+        let radii = self.radius + other.radius;
+        
+       distance <= radii 
     }
 }
 
 pub fn visualize_colliders(q: Query<(&Collider, &Transform)>, mut gizmos: Gizmos) {
     for (c, t) in q.iter() {
-        gizmos.circle_2d(t.translation.xy(), c.radius, Color::ORANGE);
+        gizmos.circle_2d(t.translation.xy(), c.radius, Color::ORANGE).segments(64);
     }
 }
