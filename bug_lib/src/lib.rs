@@ -4,6 +4,7 @@ use bevy_embedded_assets::EmbeddedAssetPlugin;
 use camera::CameraPlugin;
 use collision::CollisionPlugin;
 use enemy::EnemyPlugin;
+use game::GamePlugin;
 use movement::MovementPlugin;
 use state::StatePlugin;
 use swatter::SwatterPlugin;
@@ -11,17 +12,18 @@ use tower::TowerPlugin;
 use ui::UiPlugin;
 
 mod asset_loading;
+mod audio;
 mod camera;
 mod collision;
 mod combat;
 mod enemy;
+mod game;
 mod movement;
 mod state;
 mod steering;
 mod swatter;
 mod tower;
 mod ui;
-mod audio;
 
 pub mod prelude {
     pub use bevy::prelude::*;
@@ -44,7 +46,8 @@ impl PluginGroup for BugGamePlugins {
             .add(EnemyPlugin)
             .add(MovementPlugin)
             .add(CollisionPlugin)
-            .add(TowerPlugin);
+            .add(TowerPlugin)
+            .add(GamePlugin);
         group
     }
 }

@@ -6,15 +6,25 @@ use bevy::{
 
 use crate::{
     collision::{visualize_colliders, Collider},
-    enemy::Enemy, movement::velocity_moves_transforms,
+    enemy::Enemy,
+    movement::velocity_moves_transforms,
 };
 
 pub struct SwatterPlugin;
 
 impl Plugin for SwatterPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (swatter_follows_mouse.before(visualize_colliders), swatter_despawns_enemies.after(swatter_follows_mouse).after(velocity_moves_transforms), apply_deferred))
-            .add_systems(Startup, setup_swatter);
+        app.add_systems(
+            Update,
+            (
+                swatter_follows_mouse.before(visualize_colliders),
+                swatter_despawns_enemies
+                    .after(swatter_follows_mouse)
+                    .after(velocity_moves_transforms),
+                apply_deferred,
+            ),
+        )
+        .add_systems(Startup, setup_swatter);
     }
 }
 
@@ -101,7 +111,8 @@ fn swatter_despawns_enemies(
 
     if buttons.just_pressed(MouseButton::Left) {
         for (e, _, enemy_collider, enemy_transform) in enemy_query.iter() {
-            let collision = swatter_collider.collides_with(swatter_transform, enemy_collider, enemy_transform);
+            let collision =
+                swatter_collider.collides_with(swatter_transform, enemy_collider, enemy_transform);
 
             if collision {
                 commands.entity(e).despawn_recursive()

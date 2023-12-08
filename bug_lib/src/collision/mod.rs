@@ -6,7 +6,12 @@ pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, visualize_colliders.after(swatter_follows_mouse).after(velocity_moves_transforms));
+        app.add_systems(
+            Update,
+            visualize_colliders
+                .after(swatter_follows_mouse)
+                .after(velocity_moves_transforms),
+        );
     }
 }
 
@@ -24,16 +29,20 @@ impl Collider {
         other: &Collider,
         other_transform: &Transform,
     ) -> bool {
-
-        let distance = self_transform.translation.xy().distance(other_transform.translation.xy());
+        let distance = self_transform
+            .translation
+            .xy()
+            .distance(other_transform.translation.xy());
         let radii = self.radius + other.radius;
-        
-       distance <= radii 
+
+        distance <= radii
     }
 }
 
 pub fn visualize_colliders(q: Query<(&Collider, &Transform)>, mut gizmos: Gizmos) {
     for (c, t) in q.iter() {
-        gizmos.circle_2d(t.translation.xy(), c.radius, Color::ORANGE).segments(64);
+        gizmos
+            .circle_2d(t.translation.xy(), c.radius, Color::ORANGE)
+            .segments(64);
     }
 }

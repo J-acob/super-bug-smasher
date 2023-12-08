@@ -7,7 +7,7 @@ impl Plugin for HealthPlugin {
 }
 
 #[derive(Component)]
-pub struct Health(f32);
+pub struct Health(pub f32);
 
 impl Default for Health {
     fn default() -> Self {

@@ -3,11 +3,7 @@ use bevy::prelude::*;
 pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
-    fn build(&self, app: &mut App) {
-        
-    }
+    fn build(&self, app: &mut App) {}
 }
 
-pub fn in_game_audio() {
-    
-}
+pub fn in_game_audio() {}
