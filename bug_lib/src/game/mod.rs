@@ -1,7 +1,7 @@
 use bevy::{prelude::*, time::Stopwatch};
 
 use crate::{
-    asset_loading::AppAssets, combat::prelude::Health, enemy::Enemy, state::AppState, tower::Tower, ui::MenuButtonAction,
+    asset_loading::AppAssets, combat::prelude::Health, enemy::Enemy, state::AppState, tower::Tower, ui::{MenuButtonAction, OnGameOverMenuScreen},
 };
 
 pub struct GamePlugin;
@@ -117,7 +117,7 @@ pub fn setup_game_over(
     
     let font = &assets.font;
     commands
-        .spawn(NodeBundle {
+        .spawn((NodeBundle {
             style: Style {
                 width: Val::Percent(100.),
                 height: Val::Percent(100.),
@@ -126,7 +126,7 @@ pub fn setup_game_over(
                 ..Default::default()
             },
             ..Default::default()
-        })
+        }, OnGameOverMenuScreen))
         .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_section(
@@ -138,6 +138,26 @@ pub fn setup_game_over(
                     },
                 ),
             ));
+            parent.spawn((ButtonBundle {
+                style: Style {
+                    width: Val::Px(250.),
+                    height: Val::Px(65.),
+                    margin: UiRect::all(Val::Px(20.)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                ..Default::default()
+            }, MenuButtonAction::BackToMainMenu))
+            .with_children(|parent| {
+                parent.spawn(TextBundle::from_section(
+                    "Continue", TextStyle {
+                        font_size: 40.,
+                        color: Color::rgb(0.9, 0.9, 0.9),
+                        ..Default::default()
+                    }));
+            })
+            ;
         });
 }
 

@@ -83,8 +83,10 @@ impl Plugin for MenuPlugin {
             // Common systems to all screens that handles buttons behavior
             .add_systems(
                 Update,
-                (menu_action, button_system).run_if(in_state(AppState::MainMenu)),
-            );
+                (menu_action, button_system),
+            )
+            .add_systems(OnExit(AppState::GameOver), despawn_screen::<OnGameOverMenuScreen>)
+            ;
     }
 }
 
@@ -95,6 +97,7 @@ enum MenuState {
     Settings,
     SettingsDisplay,
     SettingsSound,
+    GameOver,
     #[default]
     Disabled,
 }
@@ -114,6 +117,9 @@ struct OnDisplaySettingsMenuScreen;
 // Tag component used to tag entities added on the sound settings menu screen
 #[derive(Component)]
 struct OnSoundSettingsMenuScreen;
+
+#[derive(Component)]
+pub struct OnGameOverMenuScreen;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -598,7 +604,8 @@ fn menu_action(
                 MenuButtonAction::SettingsSound => {
                     menu_state.set(MenuState::SettingsSound);
                 }
-                MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
+                //MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
+                MenuButtonAction::BackToMainMenu => game_state.set(AppState::MainMenu),
                 MenuButtonAction::BackToSettings => {
                     menu_state.set(MenuState::Settings);
                 }
@@ -610,6 +617,7 @@ fn menu_action(
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
 fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {
+        println!("Despawning menu!");
         commands.entity(entity).despawn_recursive();
     }
 }

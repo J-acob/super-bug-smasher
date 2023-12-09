@@ -7,9 +7,11 @@ pub struct MovementPlugin;
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            Update,
+            FixedUpdate,
             velocity_moves_transforms.run_if(in_state(AppState::InGame)),
-        );
+        )
+        .insert_resource(Time::<Fixed>::from_seconds(1. / 480.))
+        ;
     }
 }
 
@@ -22,7 +24,7 @@ pub struct MovementBundle {
 #[derive(Component, Default)]
 pub struct Speed(pub f32);
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 pub struct Velocity(pub Vec2);
 
 /// Apply velocity to things that want to move.

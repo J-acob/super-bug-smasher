@@ -1,13 +1,13 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, render::render_resource::Texture};
 
 use crate::{
     collision::Collider,
     combat::prelude::Health,
     movement::{self, velocity_moves_transforms, MovementBundle, Speed, Velocity},
     state::AppState,
-    tower::Tower,
+    tower::Tower, asset_loading::AppAssets,
 };
 use rand::prelude::*;
 
@@ -16,7 +16,7 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(EnemySpawnConfig {
-            timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+            timer: Timer::from_seconds(0.75, TimerMode::Repeating),
             spawn_radius: Vec2::new(1920. / 1.5, 1080. / 1.5),
         })
         .add_systems(
@@ -32,7 +32,7 @@ impl Plugin for EnemyPlugin {
         )
         .add_systems(
             Update,
-            enemies_damage_the_tower.run_if(in_state(AppState::InGame)),
+            (enemies_damage_the_tower, flip_enemy_sprite_with_velocity).distributive_run_if(in_state(AppState::InGame)),
         );
     }
 }
@@ -42,10 +42,13 @@ pub struct Enemy;
 
 #[derive(Bundle, Default)]
 pub struct EnemyBundle {
-    transform: Transform,
+    //transform: Transform,
     health: Health,
     movement_bundle: MovementBundle,
+    sprite_bundle: SpriteBundle,
     collider: Collider,
+    //sprite: Sprite,
+    //texture: Handle<Image>,
     marker: Enemy,
 }
 
@@ -55,7 +58,7 @@ pub struct EnemySpawnConfig {
     pub spawn_radius: Vec2,
 }
 
-fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<EnemySpawnConfig>) {
+fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<EnemySpawnConfig>, assets: Res<AppAssets>) {
     config.timer.tick(time.delta());
 
     // Get a random point on the edge of the circle
@@ -68,10 +71,14 @@ fn enemies_spawn(mut commands: Commands, time: Res<Time>, mut config: ResMut<Ene
         let y = random_angle.sin() * config.spawn_radius.y;
 
         commands.spawn(EnemyBundle {
-            transform: Transform::from_translation(Vec3::new(x, y, 0.)),
             collider: Collider { radius: 32. },
             movement_bundle: MovementBundle {
                 speed: Speed(random_speed),
+                ..Default::default()
+            },
+            sprite_bundle: SpriteBundle {
+                texture: assets.enemy1_sprite.clone_weak(),
+                transform: Transform::from_translation(Vec3::new(x, y, 0.)),
                 ..Default::default()
             },
             ..Default::default()
@@ -105,6 +112,17 @@ fn enemies_damage_the_tower(
     for (_, ec, et) in eq.iter() {
         if tc.collides_with(tt, ec, et) {
             th.0 -= 1.;
+        }
+    }
+}
+
+fn flip_enemy_sprite_with_velocity(mut eq: Query<(&Enemy, &Velocity, &mut Sprite)>) {
+
+    for (_, v, mut s) in eq.iter_mut() {
+        if v.0.x.is_sign_positive() {
+            s.flip_x = true;
+        } else {
+            s.flip_x = false;
         }
     }
 }

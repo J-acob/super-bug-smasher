@@ -7,7 +7,7 @@ use bevy::{
 use crate::{
     collision::{visualize_colliders, Collider},
     enemy::Enemy,
-    movement::velocity_moves_transforms,
+    movement::velocity_moves_transforms, asset_loading::AppAssets, state::AppState,
 };
 
 pub struct SwatterPlugin;
@@ -24,7 +24,12 @@ impl Plugin for SwatterPlugin {
                 apply_deferred,
             ),
         )
-        .add_systems(Startup, setup_swatter);
+        .add_systems(OnTransition {
+            from: AppState::AssetsLoading,
+            to: AppState::MainMenu,
+        }, setup_swatter.run_if(in_state(AppState::MainMenu)))
+        .add_systems(Update, flip_swatter.run_if(in_state(AppState::InGame)))
+        ;
     }
 }
 
@@ -32,7 +37,8 @@ impl Plugin for SwatterPlugin {
 pub struct Swatter;
 
 /// Sets up swatter for use
-fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
+fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>, assets: Res<AppAssets>) {
+    let robot1_sprite = &assets.robot1_sprite;
     // Make the cursor invisible
     let mut window: Mut<Window> = windows.single_mut();
     window.cursor.visible = false;
@@ -44,7 +50,7 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
             ..Default::default()
         },
         Node::default(),
-        BackgroundColor(Color::BLUE),
+        BackgroundColor(Color::WHITE),
         Style {
             position_type: PositionType::Absolute,
             width: Val::Px(32.),
@@ -58,7 +64,10 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>) {
         },
         ZIndex::Global(1),
         FocusPolicy::default(),
-        UiImage::default(),
+        UiImage {
+            texture: robot1_sprite.clone_weak(),
+          ..Default::default()  
+        },
         ContentSize::default(),
         UiImageSize::default(),
     ));
@@ -121,4 +130,20 @@ fn swatter_despawns_enemies(
             }
         }
     }
+}
+
+// Swatter should flip depending on if mouse is going left or right
+fn flip_swatter(mut last_swatter_pos: Local<Vec2>, mut sq: Query<(&Swatter, &Transform, &mut UiImage)>) {
+
+    let (_, t, mut s) = sq.single_mut();
+    let direction = t.translation.xy() - *last_swatter_pos;
+
+    
+    if direction.x.is_sign_positive() {
+        s.flip_x = true;
+    } else {
+        s.flip_x = false;
+    }
+
+    *last_swatter_pos = t.translation.xy();
 }
