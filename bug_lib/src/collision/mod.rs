@@ -6,12 +6,15 @@ pub struct CollisionPlugin;
 
 impl Plugin for CollisionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        /*
+        app
+        .add_systems(
             Update,
             visualize_colliders
                 .after(swatter_follows_mouse)
                 .after(velocity_moves_transforms),
-        );
+        )
+        */
     }
 }
 

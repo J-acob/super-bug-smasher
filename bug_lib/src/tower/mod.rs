@@ -11,7 +11,7 @@ impl Plugin for TowerPlugin {
                 from: AppState::MainMenu,
                 to: AppState::InGame,
             },
-            setup,
+            setup_tower,
         )
         .add_systems(Update, debug_tower);
     }
@@ -29,10 +29,12 @@ pub struct TowerBundle {
 }
 
 /// Spawns the tower
-fn setup(mut commands: Commands) {
+fn setup_tower(mut commands: Commands) {
+    println!("Setting up tower!");
     commands.spawn(TowerBundle {
         transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
         collider: Collider { radius: 16. },
+        health: Health(1000.),
         ..default()
     });
 }

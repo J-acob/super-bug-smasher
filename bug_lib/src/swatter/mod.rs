@@ -1,13 +1,18 @@
+use std::time::Duration;
+
 use bevy::{
     prelude::*,
     ui::{widget::UiImageSize, ContentSize, FocusPolicy},
-    window::{CursorGrabMode, PrimaryWindow},
+    window::{CursorGrabMode, PrimaryWindow}, audio::PlaybackMode,
 };
 
 use crate::{
+    asset_loading::AppAssets,
     collision::{visualize_colliders, Collider},
+    combat::prelude::{Flasher, Health},
     enemy::Enemy,
-    movement::velocity_moves_transforms, asset_loading::AppAssets, state::AppState,
+    movement::velocity_moves_transforms,
+    state::AppState,
 };
 
 pub struct SwatterPlugin;
@@ -18,18 +23,27 @@ impl Plugin for SwatterPlugin {
             Update,
             (
                 swatter_follows_mouse.before(visualize_colliders),
-                swatter_despawns_enemies
+                swatter_damages_enemy
                     .after(swatter_follows_mouse)
-                    .after(velocity_moves_transforms),
+                    .after(velocity_moves_transforms).run_if(in_state(AppState::InGame)),
+                enemies_die,
                 apply_deferred,
-            ),
+            )
+                .chain(),
         )
-        .add_systems(OnTransition {
-            from: AppState::AssetsLoading,
-            to: AppState::MainMenu,
-        }, setup_swatter.run_if(in_state(AppState::MainMenu)))
-        .add_systems(Update, flip_swatter.run_if(in_state(AppState::InGame)))
-        ;
+        .add_systems(
+            OnTransition {
+                from: AppState::AssetsLoading,
+                to: AppState::MainMenu,
+            },
+            setup_swatter.run_if(in_state(AppState::MainMenu)),
+        )
+        .add_systems(
+            Update,
+            flip_swatter_ui_image
+                .run_if(in_state(AppState::InGame))
+                .after(swatter_follows_mouse),
+        );
     }
 }
 
@@ -66,7 +80,7 @@ fn setup_swatter(mut commands: Commands, mut windows: Query<&mut Window>, assets
         FocusPolicy::default(),
         UiImage {
             texture: robot1_sprite.clone_weak(),
-          ..Default::default()  
+            ..Default::default()
         },
         ContentSize::default(),
         UiImageSize::default(),
@@ -108,42 +122,64 @@ pub fn swatter_follows_mouse(
     }
 }
 
-fn swatter_despawns_enemies(
+fn swatter_damages_enemy(
     mut commands: Commands,
-    enemy_query: Query<(Entity, &Enemy, &Collider, &Transform)>,
+    mut enemy_query: Query<(Entity, &Enemy, &Collider, &Transform, &mut Health)>,
     swatter_query: Query<(&Swatter, &Collider, &Transform)>,
     buttons: Res<Input<MouseButton>>,
+    assets: Res<AppAssets>
 ) {
     let Ok((_, swatter_collider, swatter_transform)) = swatter_query.get_single() else {
         return;
     };
 
     if buttons.just_pressed(MouseButton::Left) {
-        for (e, _, enemy_collider, enemy_transform) in enemy_query.iter() {
+        for (e, _, enemy_collider, enemy_transform, mut health) in enemy_query.iter_mut() {
             let collision =
                 swatter_collider.collides_with(swatter_transform, enemy_collider, enemy_transform);
 
             if collision {
-                commands.entity(e).despawn_recursive()
-            } else {
-                //println!("No collision");
+                commands.entity(e).insert(Flasher(Timer::new(
+                    Duration::from_millis(100),
+                    TimerMode::Once,
+                )));
+                health.0 -= 100.;
+                commands.spawn(AudioBundle {
+                    source: assets.hit_audio.clone_weak(),
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
             }
         }
     }
 }
 
 // Swatter should flip depending on if mouse is going left or right
-fn flip_swatter(mut last_swatter_pos: Local<Vec2>, mut sq: Query<(&Swatter, &Transform, &mut UiImage)>) {
-
+fn flip_swatter_ui_image(
+    mut last_swatter_pos: Local<Vec2>,
+    mut sq: Query<(&Swatter, &Transform, &mut UiImage)>,
+) {
     let (_, t, mut s) = sq.single_mut();
-    let direction = t.translation.xy() - *last_swatter_pos;
+    let direction = (*last_swatter_pos - t.translation.xy()).normalize_or_zero();
 
-    
-    if direction.x.is_sign_positive() {
-        s.flip_x = true;
-    } else {
-        s.flip_x = false;
+    if direction.x != 0. {
+        if direction.x.is_sign_negative() {
+            s.flip_x = true;
+        } else {
+            s.flip_x = false;
+        }
     }
 
     *last_swatter_pos = t.translation.xy();
+}
+
+fn enemies_die(eq: Query<(Entity, &Enemy, &Health)>, mut commands: Commands) {
+    for (e, _, h) in eq.iter() {
+        if h.0 <= 0. {
+            commands.entity(e).despawn_recursive();
+        }
+    }
 }

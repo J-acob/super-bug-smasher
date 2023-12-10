@@ -10,8 +10,7 @@ impl Plugin for MovementPlugin {
             FixedUpdate,
             velocity_moves_transforms.run_if(in_state(AppState::InGame)),
         )
-        .insert_resource(Time::<Fixed>::from_seconds(1. / 480.))
-        ;
+        .insert_resource(Time::<Fixed>::from_hz(240.));
     }
 }
 
@@ -19,6 +18,12 @@ impl Plugin for MovementPlugin {
 pub struct MovementBundle {
     pub velocity: Velocity,
     pub speed: Speed,
+}
+
+// A modifier for things that move
+#[derive(Component)]
+pub struct MovementModifier {
+
 }
 
 #[derive(Component, Default)]

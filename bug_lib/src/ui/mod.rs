@@ -8,7 +8,7 @@
 
 use bevy::{app::AppExit, prelude::*};
 
-use crate::{asset_loading::AppAssets, state::AppState};
+use crate::{asset_loading::AppAssets, game, state::AppState};
 
 const TEXT_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
@@ -81,12 +81,14 @@ impl Plugin for MenuPlugin {
                 despawn_screen::<OnSoundSettingsMenuScreen>,
             )
             // Common systems to all screens that handles buttons behavior
+            .add_systems(Update, (menu_action, button_system))
             .add_systems(
-                Update,
-                (menu_action, button_system),
-            )
-            .add_systems(OnExit(AppState::GameOver), despawn_screen::<OnGameOverMenuScreen>)
-            ;
+                OnTransition {
+                    from: AppState::GameOver,
+                    to: AppState::MainMenu,
+                },
+                despawn_screen::<OnGameOverMenuScreen>,
+            );
     }
 }
 
@@ -97,7 +99,6 @@ enum MenuState {
     Settings,
     SettingsDisplay,
     SettingsSound,
-    GameOver,
     #[default]
     Disabled,
 }
@@ -266,10 +267,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, asset
                             MenuButtonAction::Play,
                         ))
                         .with_children(|parent| {
-                            let icon = asset_server.load("textures/Game Icons/right.png");
+                            //let icon = asset_server.load("textures/Game Icons/right.png");
                             parent.spawn(ImageBundle {
                                 style: button_icon_style.clone(),
-                                image: UiImage::new(icon),
+                                //image: UiImage::new(icon),
                                 ..default()
                             });
                             parent.spawn(TextBundle::from_section(
@@ -287,10 +288,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, asset
                             MenuButtonAction::Settings,
                         ))
                         .with_children(|parent| {
-                            let icon = asset_server.load("textures/Game Icons/wrench.png");
+                            //let icon = asset_server.load("textures/Game Icons/wrench.png");
                             parent.spawn(ImageBundle {
                                 style: button_icon_style.clone(),
-                                image: UiImage::new(icon),
+                                //image: UiImage::new(icon),
                                 ..default()
                             });
                             parent.spawn(TextBundle::from_section(
@@ -308,10 +309,10 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, asset
                             MenuButtonAction::Quit,
                         ))
                         .with_children(|parent| {
-                            let icon = asset_server.load("textures/Game Icons/exitRight.png");
+                            //let icon = asset_server.load("textures/Game Icons/exitRight.png");
                             parent.spawn(ImageBundle {
                                 style: button_icon_style,
-                                image: UiImage::new(icon),
+                                //image: UiImage::new(icon),
                                 ..default()
                             });
                             parent.spawn(TextBundle::from_section("Quit", button_text_style));
@@ -320,7 +321,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, asset
         });
 }
 
-fn settings_menu_setup(mut commands: Commands) {
+fn settings_menu_setup(mut commands: Commands, assets: Res<AppAssets>) {
     let button_style = Style {
         width: Val::Px(200.0),
         height: Val::Px(65.0),
@@ -333,6 +334,7 @@ fn settings_menu_setup(mut commands: Commands) {
     let button_text_style = TextStyle {
         font_size: 40.0,
         color: TEXT_COLOR,
+        font: assets.font.clone_weak(),
         ..default()
     };
 
@@ -365,7 +367,7 @@ fn settings_menu_setup(mut commands: Commands) {
                     for (action, text) in [
                         (MenuButtonAction::SettingsDisplay, "Display"),
                         (MenuButtonAction::SettingsSound, "Sound"),
-                        (MenuButtonAction::BackToMainMenu, "Back"),
+                        (MenuButtonAction::BackToMainMenu, "Back to menu"),
                     ] {
                         parent
                             .spawn((
@@ -387,7 +389,11 @@ fn settings_menu_setup(mut commands: Commands) {
         });
 }
 
-fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<DisplayQuality>) {
+fn display_settings_menu_setup(
+    mut commands: Commands,
+    display_quality: Res<DisplayQuality>,
+    assets: Res<AppAssets>,
+) {
     let button_style = Style {
         width: Val::Px(200.0),
         height: Val::Px(65.0),
@@ -399,6 +405,7 @@ fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<Disp
     let button_text_style = TextStyle {
         font_size: 40.0,
         color: TEXT_COLOR,
+        font: assets.font.clone_weak(),
         ..default()
     };
 
@@ -491,7 +498,7 @@ fn display_settings_menu_setup(mut commands: Commands, display_quality: Res<Disp
         });
 }
 
-fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>) {
+fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>, assets: Res<AppAssets>) {
     let button_style = Style {
         width: Val::Px(200.0),
         height: Val::Px(65.0),
@@ -503,6 +510,7 @@ fn sound_settings_menu_setup(mut commands: Commands, volume: Res<Volume>) {
     let button_text_style = TextStyle {
         font_size: 40.0,
         color: TEXT_COLOR,
+        font: assets.font.clone_weak(),
         ..default()
     };
 
@@ -587,14 +595,16 @@ fn menu_action(
     >,
     mut app_exit_events: EventWriter<AppExit>,
     mut menu_state: ResMut<NextState<MenuState>>,
-    mut game_state: ResMut<NextState<AppState>>,
+    mut next_game_state: ResMut<NextState<AppState>>,
+    game_state: Res<State<AppState>>,
 ) {
     for (interaction, menu_button_action) in &interaction_query {
         if *interaction == Interaction::Pressed {
             match menu_button_action {
                 MenuButtonAction::Quit => app_exit_events.send(AppExit),
                 MenuButtonAction::Play => {
-                    game_state.set(AppState::InGame);
+                    //println!("App State: {:?}", game_state.0);
+                    next_game_state.set(AppState::InGame);
                     menu_state.set(MenuState::Disabled);
                 }
                 MenuButtonAction::Settings => menu_state.set(MenuState::Settings),
@@ -605,7 +615,15 @@ fn menu_action(
                     menu_state.set(MenuState::SettingsSound);
                 }
                 //MenuButtonAction::BackToMainMenu => menu_state.set(MenuState::Main),
-                MenuButtonAction::BackToMainMenu => game_state.set(AppState::MainMenu),
+                MenuButtonAction::BackToMainMenu => {
+                    if *game_state.get() == AppState::MainMenu {
+                        menu_state.set(MenuState::Main)
+                    }
+
+                    if *game_state.get() == AppState::GameOver {
+                        next_game_state.set(AppState::MainMenu)
+                    }
+                }
                 MenuButtonAction::BackToSettings => {
                     menu_state.set(MenuState::Settings);
                 }
@@ -617,7 +635,6 @@ fn menu_action(
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
 fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {
-        println!("Despawning menu!");
         commands.entity(entity).despawn_recursive();
     }
 }

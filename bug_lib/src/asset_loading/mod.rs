@@ -24,6 +24,17 @@ pub struct AppAssets {
     pub robot1_sprite: Handle<Image>,
     #[asset(path = "embedded://sprites/enemy1.png")]
     pub enemy1_sprite: Handle<Image>,
+    #[asset(path = "embedded://sprites/enemy2.png")]
+    pub enemy2_sprite: Handle<Image>,
+    #[asset(path = "embedded://sprites/background.png")]
+    pub background_image: Handle<Image>,
+    #[asset(path = "embedded://audio/DebuggerBODY.mp3")]
+    pub in_game_audio: Handle<AudioSource>,
+    #[asset(path = "embedded://audio/DebuggerDefeat.mp3")]
+    pub game_over_audio: Handle<AudioSource>,
+    #[asset(path = "embedded://audio/hit.wav")]
+    pub hit_audio: Handle<AudioSource>,
+
 }
 
 fn fail() {

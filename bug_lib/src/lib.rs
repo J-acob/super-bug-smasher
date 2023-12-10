@@ -1,8 +1,10 @@
 use asset_loading::AssetPlugin;
+use audio::AudioPlugin;
 use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use camera::CameraPlugin;
 use collision::CollisionPlugin;
+use combat::prelude::HealthPlugin;
 use enemy::EnemyPlugin;
 use game::GamePlugin;
 use movement::MovementPlugin;
@@ -47,7 +49,10 @@ impl PluginGroup for BugGamePlugins {
             .add(MovementPlugin)
             .add(CollisionPlugin)
             .add(TowerPlugin)
-            .add(GamePlugin);
+            .add(GamePlugin)
+            .add(HealthPlugin)
+            .add(AudioPlugin)
+            ;
         group
     }
 }

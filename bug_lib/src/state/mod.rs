@@ -9,7 +9,6 @@ pub enum AppState {
     MainMenu,
     InGame,
     GameOver,
-    Paused,
     Fail,
 }
 
