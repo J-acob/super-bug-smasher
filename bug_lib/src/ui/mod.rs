@@ -232,7 +232,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>, asset
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    background_color: Color::CRIMSON.into(),
+                    background_color: BackgroundColor(Color::rgba(0., 0., 0., 0.)),
                     ..default()
                 })
                 .with_children(|parent| {
@@ -633,7 +633,7 @@ fn menu_action(
 }
 
 // Generic system that takes a component as a parameter, and will despawn all entities with that component
-fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
+pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
     for entity in &to_despawn {
         commands.entity(entity).despawn_recursive();
     }

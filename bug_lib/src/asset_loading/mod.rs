@@ -36,6 +36,12 @@ pub struct AppAssets {
     pub game_over_audio: Handle<AudioSource>,
     #[asset(path = "embedded://audio/hit.wav")]
     pub hit_audio: Handle<AudioSource>,
+    #[asset(path = "embedded://sprites/slash.png")]
+    pub slash: Handle<Image>,
+    #[asset(path = "embedded://sprites/bug_core.png")]
+    pub bug_core: Handle<Image>,
+    #[asset(path = "embedded://audio/xp.wav")]
+    pub xp_audio: Handle<AudioSource>,
 }
 
 fn fail() {

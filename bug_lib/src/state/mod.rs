@@ -8,6 +8,7 @@ pub enum AppState {
     AssetsLoading,
     MainMenu,
     InGame,
+    ChooseAbility,
     GameOver,
     Fail,
 }

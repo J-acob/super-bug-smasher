@@ -10,10 +10,15 @@ use bevy::{
 use crate::{
     asset_loading::AppAssets,
     collision::{visualize_colliders, Collider},
-    combat::prelude::{Flasher, Health},
+    combat::{
+        prelude::{Flasher, Health},
+        read_damage_events, DamageEvent,
+    },
     enemy::Enemy,
+    game::ExperienceData,
     movement::velocity_moves_transforms,
     state::AppState,
+    xp::Experience,
 };
 
 pub struct SwatterPlugin;
@@ -27,8 +32,8 @@ impl Plugin for SwatterPlugin {
                 swatter_damages_enemy
                     .after(swatter_follows_mouse)
                     .after(velocity_moves_transforms)
+                    .before(read_damage_events)
                     .run_if(in_state(AppState::InGame)),
-                enemies_die,
                 apply_deferred,
             )
                 .chain(),
@@ -43,6 +48,12 @@ impl Plugin for SwatterPlugin {
         .add_systems(
             Update,
             flip_swatter_ui_image
+                .run_if(in_state(AppState::InGame))
+                .after(swatter_follows_mouse),
+        )
+        .add_systems(
+            Update,
+            swatter_picks_up_xp
                 .run_if(in_state(AppState::InGame))
                 .after(swatter_follows_mouse),
         );
@@ -130,6 +141,7 @@ fn swatter_damages_enemy(
     swatter_query: Query<(&Swatter, &Collider, &Transform)>,
     buttons: Res<Input<MouseButton>>,
     assets: Res<AppAssets>,
+    mut dewr: EventWriter<DamageEvent>,
 ) {
     let Ok((_, swatter_collider, swatter_transform)) = swatter_query.get_single() else {
         return;
@@ -145,7 +157,12 @@ fn swatter_damages_enemy(
                     Duration::from_millis(100),
                     TimerMode::Once,
                 )));
-                health.0 -= 100.;
+
+                dewr.send(DamageEvent {
+                    amount: 100.,
+                    target: e,
+                });
+
                 commands.spawn(AudioBundle {
                     source: assets.hit_audio.clone_weak(),
                     settings: PlaybackSettings {
@@ -155,6 +172,31 @@ fn swatter_damages_enemy(
                     ..Default::default()
                 });
             }
+        }
+    }
+}
+
+fn swatter_picks_up_xp(
+    sq: Query<(&Swatter, &Transform, &Collider)>,
+    expq: Query<(Entity, &Experience, &Transform, &Collider)>,
+    mut commands: Commands,
+    mut experience_data: ResMut<ExperienceData>,
+    assets: Res<AppAssets>,
+) {
+    let (_, st, sc) = sq.single();
+
+    for (e, _, et, ec) in expq.iter() {
+        let collision = sc.collides_with(st, ec, et);
+        if collision {
+            commands.entity(e).despawn_recursive();
+            commands.spawn(AudioBundle {
+                source: assets.xp_audio.clone_weak(),
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    ..Default::default()
+                },
+            });
+            experience_data.current_experience += 1.;
         }
     }
 }
@@ -176,12 +218,4 @@ fn flip_swatter_ui_image(
     }
 
     *last_swatter_pos = t.translation.xy();
-}
-
-fn enemies_die(eq: Query<(Entity, &Enemy, &Health)>, mut commands: Commands) {
-    for (e, _, h) in eq.iter() {
-        if h.0 <= 0. {
-            commands.entity(e).despawn_recursive();
-        }
-    }
 }

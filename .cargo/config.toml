@@ -30,7 +30,7 @@ CARGO_FEATURE_PURE="1" # Temporary workaround for https://github.com/bevyengine/
 
 [alias]
 build_windows = "build_windows_msvc" # Acts as a 'default'
-build_windows_release = "build_windows --no-default-features --release"
+build_windows_release = "build_windows --release"
 build_windows_msvc = "build --target=x86_64-pc-windows-msvc --no-default-features"
 build_windows_mingw = "build --target=x86_64-pc-windows-gnu --no-default-features"
 build_windows_mingw_release = "build --target=x86_64-pc-windows-gnu --release --no-default-features "

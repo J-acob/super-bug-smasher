@@ -5,11 +5,12 @@ use bevy::{prelude::*, render::render_resource::Texture, utils::HashMap};
 use crate::{
     asset_loading::AppAssets,
     collision::Collider,
-    combat::prelude::Health,
+    combat::{prelude::Health, read_damage_events},
     game::DifficultyConfig,
     movement::{self, velocity_moves_transforms, MovementBundle, Speed, Velocity},
     state::AppState,
     tower::Tower,
+    xp::ExperienceBundle,
 };
 use rand::{distributions::uniform::SampleRange, prelude::*};
 
@@ -37,6 +38,12 @@ impl Plugin for EnemyPlugin {
             Update,
             (enemies_damage_the_tower, flip_enemy_sprite_with_velocity)
                 .distributive_run_if(in_state(AppState::InGame)),
+        )
+        .add_systems(
+            Update,
+            enemies_die
+                .after(read_damage_events)
+                .run_if(in_state(AppState::InGame)),
         );
     }
 }
@@ -85,7 +92,6 @@ fn enemies_spawn(
     mut commands: Commands,
     time: Res<Time>,
     mut config: ResMut<EnemySpawnConfig>,
-    assets: Res<AppAssets>,
     difficulty_config: Res<DifficultyConfig>,
     enemy_data_pool: Res<EnemyPool>,
 ) {
@@ -160,7 +166,7 @@ fn enemies_hate_the_tower(
     }
 }
 
-fn enemies_damage_the_tower(
+pub fn enemies_damage_the_tower(
     eq: Query<(&Enemy, &Collider, &Transform)>,
     mut tq: Query<(&Tower, &Collider, &Transform, &mut Health)>,
 ) {
@@ -178,6 +184,35 @@ fn flip_enemy_sprite_with_velocity(mut eq: Query<(&Enemy, &Velocity, &mut Sprite
             s.flip_x = true;
         } else {
             s.flip_x = false;
+        }
+    }
+}
+
+fn enemies_die(
+    eq: Query<(Entity, &Enemy, &Health, &Transform)>,
+    mut commands: Commands,
+    assets: Res<AppAssets>,
+) {
+    let mut rng = thread_rng();
+    for (e, _, h, et) in eq.iter() {
+        if h.0 <= 0. {
+            // Despawn the entity
+            commands.entity(e).despawn_recursive();
+
+            // Drop some experience
+            commands.spawn(ExperienceBundle {
+                collider: Collider { radius: 16. },
+                sprite_bundle: SpriteBundle {
+                    texture: assets.bug_core.clone_weak(),
+                    transform: Transform::from_xyz(
+                        et.translation.x + rng.gen_range(-100.0..100.00),
+                        et.translation.y + rng.gen_range(-100.0..100.00),
+                        1.,
+                    ),
+                    ..Default::default()
+                },
+                ..default()
+            });
         }
     }
 }

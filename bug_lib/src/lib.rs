@@ -4,10 +4,11 @@ use bevy::{app::PluginGroupBuilder, prelude::*};
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use camera::CameraPlugin;
 use collision::CollisionPlugin;
-use combat::prelude::HealthPlugin;
+use combat::CombatPlugin;
 use enemy::EnemyPlugin;
 use game::GamePlugin;
 use movement::MovementPlugin;
+use projectile::ProjectilePlugin;
 use state::StatePlugin;
 use swatter::SwatterPlugin;
 use tower::TowerPlugin;
@@ -21,11 +22,13 @@ mod combat;
 mod enemy;
 mod game;
 mod movement;
+mod projectile;
 mod state;
 mod steering;
 mod swatter;
 mod tower;
 mod ui;
+mod xp;
 
 pub mod prelude {
     pub use bevy::prelude::*;
@@ -50,8 +53,9 @@ impl PluginGroup for BugGamePlugins {
             .add(CollisionPlugin)
             .add(TowerPlugin)
             .add(GamePlugin)
-            .add(HealthPlugin)
-            .add(AudioPlugin);
+            .add(CombatPlugin)
+            .add(AudioPlugin)
+            .add(ProjectilePlugin);
         group
     }
 }

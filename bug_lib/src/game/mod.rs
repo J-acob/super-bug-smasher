@@ -12,7 +12,8 @@ use crate::{
     enemy::{Enemy, EnemyInitData, EnemyList, EnemyPool},
     state::AppState,
     tower::Tower,
-    ui::{MenuButtonAction, OnGameOverMenuScreen},
+    ui::{MenuButtonAction, OnGameOverMenuScreen, despawn_screen},
+    xp::Experience,
 };
 
 pub struct GamePlugin;
@@ -58,7 +59,16 @@ impl Plugin for GamePlugin {
             },
             spawn_background_image,
         )
-        .add_systems(Update, rotate_background_image);
+        .add_systems(Update, rotate_background_image)
+        .add_systems(OnTransition {
+            from: AppState::InGame,
+            to: AppState::InGame
+        }, ability_ui)
+        .add_systems(OnTransition {
+            from: AppState::ChooseAbility, 
+            to: AppState::InGame
+        }, despawn_screen::<AbilityUi>)
+        ;
     }
 }
 
@@ -68,6 +78,12 @@ pub struct DifficultyConfig {
     pub difficulty_increase_timer: Timer,
     pub enemies_per_spawn_batch: f32,
     pub difficulty_level: i32,
+}
+
+#[derive(Resource)]
+pub struct ExperienceData {
+    pub current_level: i32,
+    pub current_experience: f32,
 }
 
 #[derive(Resource)]
@@ -106,7 +122,12 @@ pub fn setup_game(mut commands: Commands, assets: Res<AppAssets>) {
         ..Default::default()
     });
 
-    commands.insert_resource(EnemyPool(starting_enemy_data))
+    commands.insert_resource(EnemyPool(starting_enemy_data));
+
+    commands.insert_resource(ExperienceData {
+        current_experience: 0.,
+        current_level: 0,
+    });
 }
 
 pub fn difficulty_increases_with_time(
@@ -121,7 +142,7 @@ pub fn difficulty_increases_with_time(
         // Increase difficulty modifier
         difficulty_config.modifier += 0.1;
 
-        // Add a new enemy to the pool
+        // Allow more enemies to spawn
         difficulty_config.difficulty_level += 1;
     }
 }
@@ -194,17 +215,20 @@ pub fn setup_game_over(
     eq: Query<Entity, With<Enemy>>,
     tq: Query<Entity, With<Tower>>,
     gtq: Query<Entity, With<GameTimerUi>>,
+    expq: Query<Entity, With<Experience>>,
     assets: Res<AppAssets>,
 ) {
+    // Really awful
     for e in eq.iter() {
         commands.entity(e).despawn_recursive();
     }
-
     for e in tq.iter() {
         commands.entity(e).despawn_recursive();
     }
-
     for e in gtq.iter() {
+        commands.entity(e).despawn_recursive();
+    }
+    for e in expq.iter() {
         commands.entity(e).despawn_recursive();
     }
 
@@ -275,4 +299,31 @@ fn rotate_background_image(mut query: Query<(&BackgroundImage, &mut Transform)>,
     if let Ok((_, mut t)) = query.get_single_mut() {
         t.rotate_z(time.delta_seconds().sin() * 0.01)
     }
+}
+
+#[derive(Component, Default)]
+pub struct AbilityUi;
+
+fn ability_ui(mut commands: Commands, assets: Res<AppAssets>) {
+    commands.spawn((
+        NodeBundle {
+            style: Style {
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        AbilityUi,
+    )).with_children(|parent| {
+        parent.spawn(TextBundle::from_section("Choose An Ability", TextStyle {
+            font: assets.font.clone_weak(),
+            font_size: 40.,
+            color: Color::WHITE,
+            ..default()
+        }));
+    }).with_children(|parent| {
+        // Iterate over some abilities here
+        
+    });
 }

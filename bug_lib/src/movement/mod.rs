@@ -14,7 +14,7 @@ impl Plugin for MovementPlugin {
     }
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle, Default, Clone)]
 pub struct MovementBundle {
     pub velocity: Velocity,
     pub speed: Speed,
@@ -24,10 +24,10 @@ pub struct MovementBundle {
 #[derive(Component)]
 pub struct MovementModifier {}
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
 pub struct Speed(pub f32);
 
-#[derive(Component, Default, Debug)]
+#[derive(Component, Default, Debug, Clone)]
 pub struct Velocity(pub Vec2);
 
 /// Apply velocity to things that want to move.

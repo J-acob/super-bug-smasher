@@ -19,7 +19,7 @@ impl Plugin for CollisionPlugin {
 }
 
 /// Collider for collision detection (sorry, only circles because game jam)
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
 pub struct Collider {
     pub radius: f32,
 }
