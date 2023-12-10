@@ -51,8 +51,7 @@ impl PluginGroup for BugGamePlugins {
             .add(TowerPlugin)
             .add(GamePlugin)
             .add(HealthPlugin)
-            .add(AudioPlugin)
-            ;
+            .add(AudioPlugin);
         group
     }
 }

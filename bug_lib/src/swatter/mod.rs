@@ -1,9 +1,10 @@
 use std::time::Duration;
 
 use bevy::{
+    audio::PlaybackMode,
     prelude::*,
     ui::{widget::UiImageSize, ContentSize, FocusPolicy},
-    window::{CursorGrabMode, PrimaryWindow}, audio::PlaybackMode,
+    window::{CursorGrabMode, PrimaryWindow},
 };
 
 use crate::{
@@ -25,7 +26,8 @@ impl Plugin for SwatterPlugin {
                 swatter_follows_mouse.before(visualize_colliders),
                 swatter_damages_enemy
                     .after(swatter_follows_mouse)
-                    .after(velocity_moves_transforms).run_if(in_state(AppState::InGame)),
+                    .after(velocity_moves_transforms)
+                    .run_if(in_state(AppState::InGame)),
                 enemies_die,
                 apply_deferred,
             )
@@ -127,7 +129,7 @@ fn swatter_damages_enemy(
     mut enemy_query: Query<(Entity, &Enemy, &Collider, &Transform, &mut Health)>,
     swatter_query: Query<(&Swatter, &Collider, &Transform)>,
     buttons: Res<Input<MouseButton>>,
-    assets: Res<AppAssets>
+    assets: Res<AppAssets>,
 ) {
     let Ok((_, swatter_collider, swatter_transform)) = swatter_query.get_single() else {
         return;

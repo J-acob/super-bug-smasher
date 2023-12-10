@@ -1,11 +1,15 @@
 use std::time::Duration;
 
-use bevy::{prelude::*, time::Stopwatch, math::{vec2, vec3}};
+use bevy::{
+    math::{vec2, vec3},
+    prelude::*,
+    time::Stopwatch,
+};
 
 use crate::{
     asset_loading::AppAssets,
     combat::prelude::Health,
-    enemy::{Enemy, EnemyPool, EnemyInitData},
+    enemy::{Enemy, EnemyInitData, EnemyList, EnemyPool},
     state::AppState,
     tower::Tower,
     ui::{MenuButtonAction, OnGameOverMenuScreen},
@@ -47,12 +51,14 @@ impl Plugin for GamePlugin {
             Update,
             difficulty_increases_with_time.run_if(in_state(AppState::InGame)),
         )
-        .add_systems(OnTransition {
-            from: AppState::AssetsLoading,
-            to: AppState::MainMenu
-        }, spawn_background_image)
-        .add_systems(Update, rotate_background_image)
-        ;
+        .add_systems(
+            OnTransition {
+                from: AppState::AssetsLoading,
+                to: AppState::MainMenu,
+            },
+            spawn_background_image,
+        )
+        .add_systems(Update, rotate_background_image);
     }
 }
 
@@ -61,6 +67,7 @@ pub struct DifficultyConfig {
     pub modifier: f32,
     pub difficulty_increase_timer: Timer,
     pub enemies_per_spawn_batch: f32,
+    pub difficulty_level: i32,
 }
 
 #[derive(Resource)]
@@ -78,21 +85,24 @@ pub fn setup_game(mut commands: Commands, assets: Res<AppAssets>) {
         modifier: 1.0,
         difficulty_increase_timer: Timer::new(Duration::from_secs(60), TimerMode::Repeating),
         enemies_per_spawn_batch: 5.,
+        difficulty_level: 0,
     });
 
     let mut starting_enemy_data = Vec::new();
 
     starting_enemy_data.push(EnemyInitData {
-        sprite: assets.enemy1_sprite.clone_weak(), 
+        sprite: assets.enemy1_sprite.clone_weak(),
         health_range: (50.0..100.0),
         speed_range: (50.0..75.0),
+        required_difficulty: 0,
         ..Default::default()
     });
 
     starting_enemy_data.push(EnemyInitData {
-        sprite: assets.enemy2_sprite.clone_weak(), 
+        sprite: assets.enemy2_sprite.clone_weak(),
         health_range: (150.0..175.),
         speed_range: (25.0..35.0),
+        required_difficulty: 1,
         ..Default::default()
     });
 
@@ -108,7 +118,11 @@ pub fn difficulty_increases_with_time(
         .tick(time.delta());
 
     if difficulty_config.difficulty_increase_timer.finished() {
+        // Increase difficulty modifier
         difficulty_config.modifier += 0.1;
+
+        // Add a new enemy to the pool
+        difficulty_config.difficulty_level += 1;
     }
 }
 
@@ -246,13 +260,15 @@ pub fn setup_game_over(
         });
 }
 
-
 fn spawn_background_image(mut commands: Commands, assets: Res<AppAssets>) {
-    commands.spawn((SpriteBundle {
-        texture: assets.background_image.clone_weak(),
-        transform: Transform::from_xyz(0., 0., -5.).with_scale(vec3(2., 2., 1.)),
-        ..Default::default()
-    }, BackgroundImage));
+    commands.spawn((
+        SpriteBundle {
+            texture: assets.background_image.clone_weak(),
+            transform: Transform::from_xyz(0., 0., -5.).with_scale(vec3(2., 2., 1.)),
+            ..Default::default()
+        },
+        BackgroundImage,
+    ));
 }
 
 fn rotate_background_image(mut query: Query<(&BackgroundImage, &mut Transform)>, time: Res<Time>) {

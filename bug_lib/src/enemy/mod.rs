@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, ops::Range, time::Duration};
 
-use bevy::{prelude::*, render::render_resource::Texture};
+use bevy::{prelude::*, render::render_resource::Texture, utils::HashMap};
 
 use crate::{
     asset_loading::AppAssets,
@@ -62,7 +62,12 @@ pub struct EnemyInitData {
     //TODO
     pub damage_range: Range<f32>,
     pub movement_cooldown_range: Range<f32>,
+    // The required difficulty for this enemy to spawn
+    pub required_difficulty: i32,
 }
+
+#[derive(Resource)]
+pub struct EnemyList(pub HashMap<String, EnemyInitData>);
 
 #[derive(Resource)]
 pub struct EnemyPool(pub Vec<EnemyInitData>);
@@ -90,37 +95,42 @@ fn enemies_spawn(
         let mut rng = rand::thread_rng();
 
         for eid in enemy_data_pool.0.iter() {
-            for _ in 0..(difficulty_config.enemies_per_spawn_batch as i32
-                * difficulty_config.modifier as i32)
-            {
-                // Get random point on edge of spawn circle
-                let random_angle: f32 = rng.gen_range(0.0..=1000.) * PI * 2.;
-                let x = random_angle.cos() * config.spawn_radius.x;
-                let y = random_angle.sin() * config.spawn_radius.y;
+            // Only spawn enemies if they can spawn at the current difficulty
+            if eid.required_difficulty <= difficulty_config.difficulty_level {
+                for _ in 0..(difficulty_config.enemies_per_spawn_batch as i32
+                    * difficulty_config.modifier as i32)
+                {
+                    // Get random point on edge of spawn circle
+                    let random_angle: f32 = rng.gen_range(0.0..=1000.) * PI * 2.;
+                    let x = random_angle.cos() * config.spawn_radius.x;
+                    let y = random_angle.sin() * config.spawn_radius.y;
 
-                // Get random monster(s) stats
-                //let random_speed: f32 = rng.gen_range(50.0..100.0) * difficulty_config.modifier;
-                let random_speed: f32 = rng.gen_range(eid.speed_range.clone()) * difficulty_config.modifier;
-                let random_health: f32 = rng.gen_range(eid.health_range.clone()) * difficulty_config.modifier;
+                    // Get random monster(s) stats
+                    //let random_speed: f32 = rng.gen_range(50.0..100.0) * difficulty_config.modifier;
+                    let random_speed: f32 =
+                        rng.gen_range(eid.speed_range.clone()) * difficulty_config.modifier;
+                    let random_health: f32 =
+                        rng.gen_range(eid.health_range.clone()) * difficulty_config.modifier;
 
-                commands.spawn(EnemyBundle {
-                    collider: Collider { radius: 32. },
-                    movement_bundle: MovementBundle {
-                        speed: Speed(random_speed),
+                    commands.spawn(EnemyBundle {
+                        collider: Collider { radius: 32. },
+                        movement_bundle: MovementBundle {
+                            speed: Speed(random_speed),
+                            ..Default::default()
+                        },
+                        sprite_bundle: SpriteBundle {
+                            texture: eid.sprite.clone_weak(),
+                            transform: Transform::from_translation(Vec3::new(x, y, 0.)),
+                            ..Default::default()
+                        },
+                        movement_cooldown: MovementCooldown(Timer::new(
+                            Duration::from_secs(1),
+                            TimerMode::Repeating,
+                        )),
+                        health: Health(random_health),
                         ..Default::default()
-                    },
-                    sprite_bundle: SpriteBundle {
-                        texture: eid.sprite.clone_weak(),
-                        transform: Transform::from_translation(Vec3::new(x, y, 0.)),
-                        ..Default::default()
-                    },
-                    movement_cooldown: MovementCooldown(Timer::new(
-                        Duration::from_secs(1),
-                        TimerMode::Repeating,
-                    )),
-                    health: Health(random_health),
-                    ..Default::default()
-                });
+                    });
+                }
             }
         }
     }

@@ -22,9 +22,7 @@ pub struct MovementBundle {
 
 // A modifier for things that move
 #[derive(Component)]
-pub struct MovementModifier {
-
-}
+pub struct MovementModifier {}
 
 #[derive(Component, Default)]
 pub struct Speed(pub f32);
